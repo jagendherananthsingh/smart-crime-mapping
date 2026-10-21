@@ -1,10 +1,16 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import { env } from './env';
 
-let mongoMemoryServer: MongoMemoryServer | null = null;
+let mongoMemoryServer: any = null;
 
 export const connectDatabase = async (): Promise<string> => {
+  // If already connected, return cached connection (essential for Vercel serverless)
+  if (mongoose.connection.readyState >= 1) {
+    return env.MONGODB_URI;
+  }
+
+  const isServerless = Boolean(process.env.VERCEL || process.env.NOW_REGION || process.env.AWS_REGION);
+
   try {
     // Attempt connecting to the configured MONGODB_URI with a 3-second timeout
     mongoose.set('strictQuery', true);
@@ -14,9 +20,17 @@ export const connectDatabase = async (): Promise<string> => {
     console.log(`[Database] Connected to external MongoDB: ${env.MONGODB_URI}`);
     return env.MONGODB_URI;
   } catch (err: any) {
+    if (isServerless) {
+      console.warn(
+        `[Database] Vercel serverless notice: External MongoDB not reachable (${err.message}). Set MONGODB_URI in Vercel settings for cloud database persistence.`
+      );
+      return 'serverless_offline_mode';
+    }
+
     console.warn(`[Database] External MongoDB not reachable (${err.message}). Initializing embedded in-memory MongoDB...`);
     
     try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
       const dbPath = require('path').resolve(__dirname, '../../../data/db');
       require('fs').mkdirSync(dbPath, { recursive: true });
 

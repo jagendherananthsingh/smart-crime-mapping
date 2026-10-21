@@ -20,6 +20,7 @@
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.28.0",
     "recharts": "^2.14.1",
+    "smart-crime-mapping-monorepo": "file:..",
     "tailwind-merge": "^2.5.5",
     "zod": "^3.23.8"
   },

@@ -44,11 +44,11 @@ const authLimiter = rateLimit({
     message: 'Too many authentication attempts. Please try again later.',
   },
 });
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+app.use(['/api/auth/login', '/auth/login'], authLimiter);
+app.use(['/api/auth/register', '/auth/register'], authLimiter);
 
 // Health Check
-app.get('/api/health', (req: Request, res: Response) => {
+app.get(['/api/health', '/health'], (req: Request, res: Response) => {
   sendSuccess(
     res,
     {
@@ -62,8 +62,9 @@ app.get('/api/health', (req: Request, res: Response) => {
   );
 });
 
-// API Routes
+// API Routes (supports both direct and /api prefixed routes)
 app.use('/api', routes);
+app.use('/', routes);
 
 // 404 Route Handler
 app.use((req: Request, res: Response) => {

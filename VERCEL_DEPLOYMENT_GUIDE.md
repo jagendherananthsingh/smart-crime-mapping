@@ -1,89 +1,47 @@
-# 🚀 Vercel Deployment & Hosting Guide
+# 🚀 Vercel Unified Fullstack Deployment Guide
 ### AP Smart Crime Analysis & Predictive Insights Platform
 **Department of CSE (Data Science) • Geethanjali Institute of Science & Technology**
 
 ---
 
-## 📋 Overview
+## ⚡ Unified Simultaneous Deployment (Frontend + Backend)
 
-This platform is configured for production hosting on **Vercel** for the frontend, with options to connect to a hosted backend (e.g., Render, Railway, Fly.io, or VPS) backed by MongoDB Atlas.
+Both the **Frontend (React + Vite)** and the **Backend (Express + REST API)** are configured to deploy **together at the exact same time under a single Vercel project**.
+
+### How It Works:
+1. **Frontend SPA**: Static files are built into `frontend/dist` and served with client-side routing rewrites (`/(.*) -> /index.html`).
+2. **Backend Serverless API**: The Express application runs as a serverless function (`api/index.js`), handling all `/api/*` requests on the exact same domain.
+3. **No Cross-Origin Issues**: Because both are hosted under `https://<your-project>.vercel.app`, browser requests to `/api/...` are local (same origin), requiring no extra CORS setups or external servers!
 
 ---
 
-## ⚡ Option 1: Deploying to Vercel (Recommended)
+## 📋 1-Click Deployment Instructions
 
-### Step 1: Push Code to GitHub
-Ensure your repository is pushed to your GitHub account:
+### Step 1: Push Changes to GitHub
 ```bash
-git init
 git add .
-git commit -m "feat: hosting ready with vercel config and clean login"
-git branch -M main
-git remote add origin https://github.com/<your-username>/smart-crime-mapping.git
+git commit -m "feat: unified simultaneous frontend and backend deployment on vercel"
 git push -u origin main
 ```
 
-### Step 2: Import Project in Vercel
-1. Go to [vercel.com](https://vercel.com) and log in.
-2. Click **"Add New..."** → **"Project"**.
-3. Select your GitHub repository (`smart-crime-mapping`).
+### Step 2: Import into Vercel
+1. Open **[vercel.com/new](https://vercel.com/new)**.
+2. Select your repository: **`jagendherananthsingh/smart-crime-mapping`**.
+3. **Root Directory**: Keep the default: `./` (do **not** change it to `frontend` or `backend`).
+4. **Build and Output Settings**: Automatically detected from `vercel.json`:
+   - Build Command: `npm --prefix backend install && npm --prefix backend run build && npm --prefix frontend install && npm --prefix frontend run build`
+   - Output Directory: `frontend/dist`
 
-### Step 3: Project Configuration
-Vercel is pre-configured with both root and frontend `vercel.json` files:
-- **Framework Preset**: Vite
-- **Root Directory**: 
-  - *Default (Monorepo)*: Leave as `./` (Root `vercel.json` handles `cd frontend && npm install && npm run build` and outputs to `frontend/dist`).
-  - *OR Subfolder*: Select `frontend` (Build command: `npm run build`, Output directory: `dist`).
-
-### Step 4: Configure Environment Variables in Vercel
-Under **Environment Variables**, add:
+### Step 3: (Optional) Add MongoDB Atlas Connection
+In Vercel **Settings → Environment Variables**:
 | Key | Value (Example) | Description |
 | :--- | :--- | :--- |
-| `VITE_API_URL` | `https://your-backend.onrender.com/api` | The URL of your deployed backend API |
+| `MONGODB_URI` | `mongodb+srv://<user>:<pwd>@cluster0.mongodb.net/smart_crime_mapping` | MongoDB Atlas Cloud Database |
+| `JWT_SECRET` | `your_secure_random_key_2026` | Secret for user sessions |
 
-*Note: If no backend is configured initially, the frontend automatically falls back to graceful offline/failover mode, allowing all public dashboards, sample datasets, and crime maps to operate smoothly!*
+*(If MONGODB_URI is not set initially, the platform gracefully runs with resilient demo datasets and statistics so your live site works out of the box!)*
 
-### Step 5: Click "Deploy"
-Your site will build and be live at `https://<your-project-name>.vercel.app`.
-
----
-
-## 🛠️ Option 2: Deploying the Backend API
-
-To connect the live Vercel frontend with a live Node/Express backend:
-
-### Recommended Free/Low-Cost Platforms:
-- **Render** ([render.com](https://render.com)) - Web Service (Node)
-- **Railway** ([railway.app](https://railway.app)) - Deploy from GitHub
-- **Fly.io** or **Docker Container**
-
-### Backend Environment Variables:
-Set these in your backend host (e.g., Render Dashboard):
-```ini
-NODE_ENV=production
-PORT=5000
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/smart_crime_mapping?retryWrites=true&w=majority
-JWT_SECRET=your_super_strong_production_secret_key_2026
-JWT_EXPIRES_IN=7d
-CLIENT_URL=https://<your-vercel-app-name>.vercel.app
-```
-
-### Database (MongoDB Atlas):
-1. Create a free M0 Cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
-2. Allow network access (`0.0.0.0/0` or your backend IP).
-3. Copy the connection string into `MONGODB_URI`.
-
----
-
-## 🔍 Pre-Configured Hosting Optimizations
-
-1. **SPA Rewrites**:
-   - `vercel.json` contains rewrites mapping `/(.*)` to `/index.html` so refreshing pages (`/dashboard`, `/analytics`, `/predictions`, `/crime-map`, `/request-access`) never produces 404 errors.
-2. **Dynamic API URL Resolution**:
-   - `frontend/src/api/client.ts` automatically normalizes trailing slashes, appends `/api` if needed, and prevents Mixed Content security blocks on HTTPS domains.
-3. **CORS Flexibility**:
-   - `backend/src/app.ts` dynamically mirrors request origins to support custom Vercel preview and production domains with secure credentials.
-4. **Static Asset Caching**:
-   - 1-year immutable caching configured for static JavaScript and CSS assets in `/assets/`.
-5. **Clean Authentication**:
-   - Demo one-click buttons removed from the Login page for a clean, production-grade interface.
+### Step 4: Click Deploy!
+Both your **Frontend Website** and your **Backend API** will be deployed and active together in under 1 minute!
+- Frontend UI: `https://<your-app>.vercel.app/`
+- Backend API: `https://<your-app>.vercel.app/api/health`
