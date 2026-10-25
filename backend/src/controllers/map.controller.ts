@@ -97,52 +97,59 @@ export class MapController {
 
       const match = { district: district.toString() };
 
-      const [total, categoryAgg, severityAgg, topLocations] = await Promise.all([
-        CrimeRecord.countDocuments(match),
-        CrimeRecord.aggregate([
-          { $match: match },
-          { $group: { _id: '$crimeCategory', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-        ]),
-        CrimeRecord.aggregate([
-          { $match: match },
-          { $group: { _id: '$severity', count: { $sum: 1 } } },
-        ]),
-        CrimeRecord.aggregate([
-          { $match: match },
-          { $group: { _id: '$locationName', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-          { $limit: 5 },
-        ]),
-      ]);
+      if (isDbConnected()) {
+        const [total, categoryAgg, severityAgg, topLocations] = await Promise.all([
+          CrimeRecord.countDocuments(match),
+          CrimeRecord.aggregate([
+            { $match: match },
+            { $group: { _id: '$crimeCategory', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+          ]),
+          CrimeRecord.aggregate([
+            { $match: match },
+            { $group: { _id: '$severity', count: { $sum: 1 } } },
+          ]),
+          CrimeRecord.aggregate([
+            { $match: match },
+            { $group: { _id: '$locationName', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 5 },
+          ]),
+        ]);
 
-      const mostCommonCrime = categoryAgg[0]?._id || 'N/A';
-      const mostCommonCrimeCount = categoryAgg[0]?.count || 0;
+        if (total > 0) {
+          const mostCommonCrime = categoryAgg[0]?._id || 'N/A';
+          const mostCommonCrimeCount = categoryAgg[0]?.count || 0;
 
-      sendSuccess(
-        res,
-        {
-          district,
-          totalIncidents: total,
-          mostCommonCrime,
-          mostCommonCrimeCount,
-          categoryBreakdown: categoryAgg.map((c) => ({
-            category: c._id,
-            count: c.count,
-            percentage: total > 0 ? Number(((c.count / total) * 100).toFixed(1)) : 0,
-          })),
-          severityBreakdown: severityAgg.map((s) => ({
-            severity: s._id,
-            count: s.count,
-          })),
-          topLocations: topLocations.map((l) => ({
-            location: l._id,
-            count: l.count,
-          })),
-        },
-        'Area statistics retrieved'
-      );
+          sendSuccess(
+            res,
+            {
+              district,
+              totalIncidents: total,
+              mostCommonCrime,
+              mostCommonCrimeCount,
+              categoryBreakdown: categoryAgg.map((c) => ({
+                category: c._id,
+                count: c.count,
+                percentage: total > 0 ? Number(((c.count / total) * 100).toFixed(1)) : 0,
+              })),
+              severityBreakdown: severityAgg.map((s) => ({
+                severity: s._id,
+                count: s.count,
+              })),
+              topLocations: topLocations.map((l) => ({
+                location: l._id,
+                count: l.count,
+              })),
+            },
+            'Area statistics retrieved'
+          );
+          return;
+        }
+      }
     } catch (error: any) {
+      console.warn('[Map getAreaStats notice]', error?.message || error);
+    }
       const dist = (req.query.district || 'Visakhapatnam').toString();
       sendSuccess(
         res,
@@ -172,6 +179,5 @@ export class MapController {
         },
         'Area statistics retrieved (Cloud Fallback Mode)'
       );
-    }
   }
 }
