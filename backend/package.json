@@ -2,7 +2,7 @@
   "name": "smart-crime-mapping-backend",
   "version": "1.0.0",
   "description": "Backend API and ML service for Smart Crime Mapping and Predictive Insights",
-  "main": "dist/server.js",
+  "main": "dist/app.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
     "build": "tsc",

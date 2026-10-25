@@ -8,7 +8,23 @@ import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
 import { sendSuccess, sendError } from './utils/response';
 
+import { connectDatabase } from './config/database';
+
 const app: Application = express();
+
+// Auto-connect database once on startup/first request
+let isDbConnecting = false;
+app.use(async (req: Request, res: Response, next: any) => {
+  if (!isDbConnecting) {
+    isDbConnecting = true;
+    try {
+      await connectDatabase();
+    } catch (err: any) {
+      console.warn('[Serverless DB Middleware]', err?.message || err);
+    }
+  }
+  next();
+});
 
 // Security Middlewares
 app.use(
