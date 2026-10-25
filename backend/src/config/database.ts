@@ -17,9 +17,9 @@ export const connectDatabase = async (): Promise<string> => {
 
   const isServerless = Boolean(process.env.VERCEL || process.env.NOW_REGION || process.env.AWS_REGION);
 
-  // On Vercel serverless, if no external remote Atlas URI is provided, run immediately in Cloud Resilient Mode
-  if (isServerless && (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('127.0.0.1') || process.env.MONGODB_URI.includes('localhost'))) {
-    console.log('[Database] Vercel Serverless: Running in Cloud Resilient Mode (Set MONGODB_URI in Vercel settings for Atlas cloud persistence).');
+  // On Vercel serverless, if no external remote Atlas URI is provided, run in Cloud Resilient Mode
+  if (isServerless && (!env.MONGODB_URI || env.MONGODB_URI.includes('127.0.0.1') || env.MONGODB_URI.includes('localhost'))) {
+    console.log('[Database] Vercel Serverless: Running in Cloud Resilient Mode.');
     return 'serverless_cloud_mode';
   }
 

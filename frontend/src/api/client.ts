@@ -2,6 +2,12 @@
 import axios from 'axios';
 
 const resolveApiBaseUrl = (): string => {
+  // When hosted on Vercel or remote HTTPS hosts, default to relative '/api'
+  // to avoid browser Mixed Content security errors and allow Vercel rewrites/proxies.
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return '/api';
+  }
+
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
     const cleanUrl = envUrl.trim().replace(/\/+$/, '');
@@ -9,12 +15,6 @@ const resolveApiBaseUrl = (): string => {
       return `${cleanUrl}/api`;
     }
     return cleanUrl;
-  }
-
-  // When hosted on Vercel or remote HTTPS hosts, default to relative '/api'
-  // to avoid browser Mixed Content security errors and allow Vercel rewrites/proxies.
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return '/api';
   }
 
   return 'http://localhost:5000/api';

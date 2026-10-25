@@ -1,3 +1,11 @@
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load environment variables from both root .env and backend/.env
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../backend/.env') });
+dotenv.config();
+
 const appModule = require('../backend/dist/app');
 const app = appModule.default || appModule;
 const { connectDatabase } = require('../backend/dist/config/database');
