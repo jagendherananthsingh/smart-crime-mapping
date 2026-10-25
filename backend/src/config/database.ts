@@ -1,5 +1,13 @@
+import dns from 'dns';
 import mongoose from 'mongoose';
 import { env } from './env';
+
+// Configure high-availability public DNS to resolve MongoDB Atlas SRV records
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+} catch (e) {
+  // Ignore in sandboxed runtimes
+}
 
 let mongoMemoryServer: any = null;
 

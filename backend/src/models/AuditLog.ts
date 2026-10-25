@@ -5,7 +5,7 @@ export interface IAuditLogDocument extends Omit<IAuditLog, '_id'>, Document {}
 
 const AuditLogSchema = new Schema<IAuditLogDocument>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User' },
+    userId: { type: Schema.Types.Mixed, ref: 'User' },
     userEmail: { type: String },
     action: { type: String, required: true },
     resource: { type: String, required: true },

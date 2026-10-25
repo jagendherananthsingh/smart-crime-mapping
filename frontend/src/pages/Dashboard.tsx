@@ -91,31 +91,48 @@ export const Dashboard: React.FC = () => {
         );
       }
 
-      const results = await Promise.all(promises);
-      const sumRes = results[0];
-      const catRes = results[1];
-      const locRes = results[2];
+      const results = await Promise.allSettled(promises);
+      const sumRes = results[0]?.status === 'fulfilled' ? results[0].value : null;
+      const catRes = results[1]?.status === 'fulfilled' ? results[1].value : null;
+      const locRes = results[2]?.status === 'fulfilled' ? results[2].value : null;
 
-      setSummary(sumRes.data);
+      if (sumRes?.data) {
+        setSummary(sumRes.data);
+      }
 
       // Normalize categories
-      const catData = catRes.data;
+      const catData = catRes?.data;
       const catArr = catData?.categoryBreakdown || catData?.categories || [];
-      setCategories(catArr);
+      if (catArr.length > 0) {
+        setCategories(catArr);
+      }
 
       // Normalize locations
-      const locData = locRes.data;
+      const locData = locRes?.data;
       const locArr = locData?.districts || locData?.topLocations || [];
-      setLocations(locArr);
+      if (locArr.length > 0) {
+        setLocations(locArr);
+      }
 
       if (!isUser) {
-        const trendRes = results[3];
-        const insRes = results[4];
-        const crimesRes = results[5];
+        const trendRes = results[3]?.status === 'fulfilled' ? results[3].value : null;
+        const insRes = results[4]?.status === 'fulfilled' ? results[4].value : null;
+        const crimesRes = results[5]?.status === 'fulfilled' ? results[5].value : null;
 
-        setTrends(trendRes.data);
-        setInsights(insRes.data?.insights || []);
-        setRecentCrimes(crimesRes.data?.records || []);
+        if (trendRes?.data) {
+          setTrends(trendRes.data);
+        }
+        if (insRes?.data?.insights) {
+          setInsights(insRes.data.insights);
+        }
+        if (crimesRes?.data?.records) {
+          setRecentCrimes(crimesRes.data.records);
+        }
+      }
+
+      const allFailed = results.every((r) => r.status === 'rejected');
+      if (allFailed) {
+        setError('System Diagnostics: Failed to connect to the backend cluster. Ensure the server is online.');
       }
     } catch (err: any) {
       console.error('Failed to fetch dashboard data:', err);
