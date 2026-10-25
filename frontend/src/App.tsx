@@ -16,6 +16,9 @@ const Predictions = React.lazy(() => import('./pages/Predictions').then(m => ({ 
 const PoliceDataRequestPage = React.lazy(() => import('./pages/PoliceDataRequestPage').then(m => ({ default: m.PoliceDataRequestPage })));
 const AdminDataRequests = React.lazy(() => import('./pages/AdminDataRequests').then(m => ({ default: m.AdminDataRequests })));
 const AdminUsers = React.lazy(() => import('./pages/AdminUsers').then(m => ({ default: m.AdminUsers })));
+const Datasets = React.lazy(() => import('./pages/Datasets').then(m => ({ default: m.Datasets })));
+const Reports = React.lazy(() => import('./pages/Reports').then(m => ({ default: m.Reports })));
+const ModelPerformance = React.lazy(() => import('./pages/ModelPerformance').then(m => ({ default: m.ModelPerformance })));
 const Profile = React.lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
 const NotFound = React.lazy(() => import('./pages/NotFound').then(m => ({ default: m.NotFound })));
 
@@ -54,6 +57,9 @@ export const App: React.FC = () => {
               <Route path="crime-map" element={<RoleGuard allowedRoles={['ADMIN']}><CrimeMapPage /></RoleGuard>} />
               <Route path="analytics" element={<RoleGuard allowedRoles={['ADMIN', 'POLICE']}><Analytics /></RoleGuard>} />
               <Route path="predictions" element={<RoleGuard allowedRoles={['ADMIN', 'POLICE']}><Predictions /></RoleGuard>} />
+              <Route path="model-performance" element={<RoleGuard allowedRoles={['ADMIN', 'POLICE']}><ModelPerformance /></RoleGuard>} />
+              <Route path="datasets" element={<RoleGuard allowedRoles={['ADMIN', 'POLICE']}><Datasets /></RoleGuard>} />
+              <Route path="reports" element={<RoleGuard allowedRoles={['ADMIN', 'POLICE']}><Reports /></RoleGuard>} />
               <Route path="data-requests" element={<PoliceDataRequestPage />} />
               <Route path="admin/requests" element={<RoleGuard allowedRoles={['ADMIN']}><AdminDataRequests /></RoleGuard>} />
               <Route path="admin/users" element={<RoleGuard allowedRoles={['ADMIN']}><AdminUsers /></RoleGuard>} />

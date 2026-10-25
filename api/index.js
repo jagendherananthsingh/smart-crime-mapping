@@ -9,9 +9,10 @@ module.exports = async (req, res) => {
   if (!isDbInitialized) {
     try {
       await connectDatabase();
-      isDbInitialized = true;
     } catch (err) {
       console.warn('[Vercel Serverless] DB connection note:', err?.message || err);
+    } finally {
+      isDbInitialized = true;
     }
   }
 

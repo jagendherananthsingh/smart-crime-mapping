@@ -224,7 +224,7 @@ export const crimesApi = {
     return res.data;
   },
   deleteCrime: async (id: string) => {
-    const res = await apiClient.delete<ApiResponse<null>>('/crimes/${id}');
+    const res = await apiClient.delete<ApiResponse<null>>(`/crimes/${id}`);
     return res.data;
   },
 };

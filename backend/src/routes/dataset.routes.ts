@@ -18,7 +18,7 @@ const upload = multer({
 const router = Router();
 
 router.get('/', authenticate, DatasetController.getDatasets);
-router.get('/sample/download', DatasetController.downloadSample);
+router.get(['/sample/download', '/sample-download'], DatasetController.downloadSample);
 router.get('/:id', authenticate, DatasetController.getDatasetById);
 router.post(
   '/upload',

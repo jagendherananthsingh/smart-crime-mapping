@@ -3,7 +3,13 @@ import { env } from './env';
 
 let mongoMemoryServer: any = null;
 
+export const isDbConnected = (): boolean => mongoose.connection.readyState === 1;
+
 export const connectDatabase = async (): Promise<string> => {
+  // Disable command buffering globally so queries don't hang for 10s when DB is offline
+  mongoose.set('bufferCommands', false);
+  mongoose.set('strictQuery', true);
+
   // If already connected, return cached connection (essential for Vercel serverless)
   if (mongoose.connection.readyState >= 1) {
     return env.MONGODB_URI;
@@ -11,9 +17,14 @@ export const connectDatabase = async (): Promise<string> => {
 
   const isServerless = Boolean(process.env.VERCEL || process.env.NOW_REGION || process.env.AWS_REGION);
 
+  // On Vercel serverless, if no external remote Atlas URI is provided, run immediately in Cloud Resilient Mode
+  if (isServerless && (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('127.0.0.1') || process.env.MONGODB_URI.includes('localhost'))) {
+    console.log('[Database] Vercel Serverless: Running in Cloud Resilient Mode (Set MONGODB_URI in Vercel settings for Atlas cloud persistence).');
+    return 'serverless_cloud_mode';
+  }
+
   try {
     // Attempt connecting to the configured MONGODB_URI with a 3-second timeout
-    mongoose.set('strictQuery', true);
     await mongoose.connect(env.MONGODB_URI, {
       serverSelectionTimeoutMS: 3000,
     });
@@ -22,7 +33,7 @@ export const connectDatabase = async (): Promise<string> => {
   } catch (err: any) {
     if (isServerless) {
       console.warn(
-        `[Database] Vercel serverless notice: External MongoDB not reachable (${err.message}). Set MONGODB_URI in Vercel settings for cloud database persistence.`
+        `[Database] Vercel serverless notice: External MongoDB not reachable (${err.message}). Entering Cloud Resilient Mode.`
       );
       return 'serverless_offline_mode';
     }
