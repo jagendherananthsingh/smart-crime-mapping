@@ -10,10 +10,10 @@ dotenv.config();
 
 let appModule;
 try {
-  appModule = require('../backend/dist/app');
+  appModule = require('./backend/dist/app');
 } catch (e) {
   try {
-    appModule = require('./backend/dist/app');
+    appModule = require('../backend/dist/app');
   } catch (e2) {
     appModule = require(path.resolve(process.cwd(), 'backend/dist/app'));
   }
@@ -23,10 +23,10 @@ const app = appModule.default || appModule;
 
 let connectDatabase;
 try {
-  connectDatabase = require('../backend/dist/config/database').connectDatabase;
+  connectDatabase = require('./backend/dist/config/database').connectDatabase;
 } catch (e) {
   try {
-    connectDatabase = require('./backend/dist/config/database').connectDatabase;
+    connectDatabase = require('../backend/dist/config/database').connectDatabase;
   } catch (e2) {
     connectDatabase = require(path.resolve(process.cwd(), 'backend/dist/config/database')).connectDatabase;
   }
