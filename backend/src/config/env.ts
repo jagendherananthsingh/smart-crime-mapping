@@ -6,7 +6,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 dotenv.config();
 
-const PRIMARY_MONGODB_URI = 'mongodb+srv://jagendherananthsingh_db_user:1223334444@cluster0.foucqyy.mongodb.net/smart_crime_mapping?appName=Cluster0';
+const PRIMARY_MONGODB_URI = 'mongodb://jagendherananthsingh_db_user:1223334444@ac-brmnuiq-shard-00-00.foucqyy.mongodb.net:27017,ac-brmnuiq-shard-00-01.foucqyy.mongodb.net:27017,ac-brmnuiq-shard-00-02.foucqyy.mongodb.net:27017/smart_crime_mapping?ssl=true&authSource=admin&replicaSet=atlas-orj2ww-shard-0';
 const PRIMARY_JWT_SECRET = 'smart_crime_mapping_super_secure_jwt_secret_key_2026';
 
 export const env = {

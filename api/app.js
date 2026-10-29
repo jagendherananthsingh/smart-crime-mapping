@@ -86,7 +86,7 @@ var init_env = __esm({
     import_dotenv.default.config({ path: import_path.default.resolve(__dirname, "../../.env") });
     import_dotenv.default.config({ path: import_path.default.resolve(__dirname, "../../../.env") });
     import_dotenv.default.config();
-    PRIMARY_MONGODB_URI = "mongodb+srv://jagendherananthsingh_db_user:1223334444@cluster0.foucqyy.mongodb.net/smart_crime_mapping?appName=Cluster0";
+    PRIMARY_MONGODB_URI = "mongodb://jagendherananthsingh_db_user:1223334444@ac-brmnuiq-shard-00-00.foucqyy.mongodb.net:27017,ac-brmnuiq-shard-00-01.foucqyy.mongodb.net:27017,ac-brmnuiq-shard-00-02.foucqyy.mongodb.net:27017/smart_crime_mapping?ssl=true&authSource=admin&replicaSet=atlas-orj2ww-shard-0";
     PRIMARY_JWT_SECRET = "smart_crime_mapping_super_secure_jwt_secret_key_2026";
     env = {
       NODE_ENV: process.env.NODE_ENV || "production",

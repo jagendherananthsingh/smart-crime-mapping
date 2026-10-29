@@ -1,16 +1,12 @@
 const path = require('path');
 const dotenv = require('dotenv');
 
-// Load environment configurations
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../backend/.env') });
 dotenv.config();
 
 let app;
-let initError = null;
-
 try {
-  // First try the bundled self-contained application
   const appModule = require('./app');
   app = appModule.default || appModule;
 } catch (e1) {
@@ -22,30 +18,21 @@ try {
       const appModule = require('../backend/dist/app');
       app = appModule.default || appModule;
     } catch (e3) {
-      initError = { e1: e1.message, e2: e2.message, e3: e3.message, stack: e3.stack };
-      console.error('[Vercel Serverless] Failed to load Express app:', initError);
+      console.error('[Vercel Serverless] Failed to load application:', e1, e2, e3);
+      // Fallback minimal express app if loading failed
+      const express = require('express');
+      app = express();
+      app.all('*', (req, res) => {
+        res.status(500).json({
+          success: false,
+          error: 'INITIALIZATION_FAILED',
+          message: 'Backend serverless module failed to initialize',
+          details: { e1: e1?.message, e2: e2?.message, e3: e3?.message }
+        });
+      });
     }
   }
 }
 
-module.exports = (req, res) => {
-  if (initError || !app) {
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({
-      success: false,
-      error: 'SERVERLESS_INIT_ERROR',
-      message: 'Failed to initialize backend application',
-      details: initError,
-    }));
-    return;
-  }
-
-  // Restore client-requested path from Vercel proxy headers
-  const forwardedUri = req.headers['x-forwarded-uri'] || req.headers['x-real-url'] || req.headers['x-matched-path'];
-  if (forwardedUri && forwardedUri.startsWith('/api')) {
-    req.url = forwardedUri;
-  }
-
-  return app(req, res);
-};
+// Export Express app directly for Vercel's native Express bridge
+module.exports = app;
