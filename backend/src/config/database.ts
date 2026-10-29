@@ -2,74 +2,87 @@ import dns from 'dns';
 import mongoose from 'mongoose';
 import { env } from './env';
 
-// Configure high-availability public DNS to resolve MongoDB Atlas SRV records
+// Configure high-availability public DNS to resolve MongoDB Atlas SRV records if ever needed
 try {
   dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 } catch (e) {
   // Ignore in sandboxed runtimes
 }
 
+export const DIRECT_ATLAS_URI =
+  'mongodb://jagendherananthsingh_db_user:1223334444@ac-brmnuiq-shard-00-00.foucqyy.mongodb.net:27017,ac-brmnuiq-shard-00-01.foucqyy.mongodb.net:27017,ac-brmnuiq-shard-00-02.foucqyy.mongodb.net:27017/smart_crime_mapping?ssl=true&authSource=admin&replicaSet=atlas-orj2ww-shard-0';
+
 let mongoMemoryServer: any = null;
+let connectionPromise: Promise<string> | null = null;
 
 export const isDbConnected = (): boolean => mongoose.connection.readyState === 1;
 
 export const connectDatabase = async (): Promise<string> => {
-  // Disable command buffering globally so queries don't hang for 10s when DB is offline
+  // Disable command buffering globally so queries don't hang when DB is offline
   mongoose.set('bufferCommands', false);
   mongoose.set('strictQuery', true);
 
   // If already connected, return cached connection (essential for Vercel serverless)
-  if (mongoose.connection.readyState >= 1) {
-    return env.MONGODB_URI;
+  if (mongoose.connection.readyState === 1) {
+    return env.MONGODB_URI || DIRECT_ATLAS_URI;
   }
 
-  const isServerless = Boolean(process.env.VERCEL || process.env.NOW_REGION || process.env.AWS_REGION);
-
-  // On Vercel serverless, if no external remote Atlas URI is provided, run in Cloud Resilient Mode
-  if (isServerless && (!env.MONGODB_URI || env.MONGODB_URI.includes('127.0.0.1') || env.MONGODB_URI.includes('localhost'))) {
-    console.log('[Database] Vercel Serverless: Running in Cloud Resilient Mode.');
-    return 'serverless_cloud_mode';
+  // Reuse in-flight connection promise to prevent duplicate connections
+  if (connectionPromise) {
+    return connectionPromise;
   }
 
-  try {
-    // Attempt connecting to the configured MONGODB_URI with a 3-second timeout
-    await mongoose.connect(env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 3000,
-    });
-    console.log(`[Database] Connected to external MongoDB: ${env.MONGODB_URI}`);
-    return env.MONGODB_URI;
-  } catch (err: any) {
-    if (isServerless) {
-      console.warn(
-        `[Database] Vercel serverless notice: External MongoDB not reachable (${err.message}). Entering Cloud Resilient Mode.`
-      );
-      return 'serverless_offline_mode';
+  connectionPromise = (async () => {
+    const isServerless = Boolean(process.env.VERCEL || process.env.NOW_REGION || process.env.AWS_REGION);
+
+    // Resolve target URI: if SRV format for our cluster is given, rewrite to direct replica set hosts
+    let targetUri = env.MONGODB_URI || DIRECT_ATLAS_URI;
+    if (targetUri.includes('cluster0.foucqyy.mongodb.net') && targetUri.startsWith('mongodb+srv:')) {
+      targetUri = DIRECT_ATLAS_URI;
     }
 
-    console.warn(`[Database] External MongoDB not reachable (${err.message}). Initializing embedded in-memory MongoDB...`);
-    
     try {
-      const { MongoMemoryServer } = require('mongodb-memory-server');
-      const dbPath = require('path').resolve(__dirname, '../../../data/db');
-      require('fs').mkdirSync(dbPath, { recursive: true });
-
-      mongoMemoryServer = await MongoMemoryServer.create({
-        instance: {
-          dbName: 'smart_crime_mapping',
-          port: 27017,
-          launchTimeout: 120000,
-          dbPath: dbPath,
-        },
+      await mongoose.connect(targetUri, {
+        serverSelectionTimeoutMS: 4000,
+        connectTimeoutMS: 4000,
       });
-      const uri = mongoMemoryServer.getUri();
-      await mongoose.connect(uri);
-      console.log(`[Database] Connected to embedded in-memory MongoDB: ${uri}`);
-      return uri;
-    } catch (memErr: any) {
-      console.error('[Database] Fatal: Failed to initialize embedded MongoDB', memErr);
-      throw memErr;
+      console.log(`[Database] Connected to external MongoDB Atlas cluster`);
+      return targetUri;
+    } catch (err: any) {
+      console.warn(`[Database] External MongoDB notice: ${err?.message || err}. Entering Cloud Resilient Mode.`);
+      
+      if (isServerless || process.env.NODE_ENV === 'production') {
+        return 'cloud_resilient_mode';
+      }
+
+      // Local development fallback to MongoMemoryServer
+      try {
+        const { MongoMemoryServer } = require('mongodb-memory-server');
+        const dbPath = require('path').resolve(__dirname, '../../../data/db');
+        require('fs').mkdirSync(dbPath, { recursive: true });
+
+        mongoMemoryServer = await MongoMemoryServer.create({
+          instance: {
+            dbName: 'smart_crime_mapping',
+            port: 27017,
+            launchTimeout: 120000,
+            dbPath: dbPath,
+          },
+        });
+        const uri = mongoMemoryServer.getUri();
+        await mongoose.connect(uri);
+        console.log(`[Database] Connected to embedded in-memory MongoDB: ${uri}`);
+        return uri;
+      } catch (memErr: any) {
+        console.warn('[Database] In-memory MongoDB initialization skipped:', memErr?.message || memErr);
+        return 'cloud_resilient_mode';
+      }
+    } finally {
+      connectionPromise = null;
     }
-  }
+  })();
+
+  return connectionPromise;
 };
 
 export const disconnectDatabase = async (): Promise<void> => {

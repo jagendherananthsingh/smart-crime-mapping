@@ -13,12 +13,44 @@ console.log('\n[1/4] Building Backend TypeScript...');
 execSync('npm --prefix backend install', { cwd: rootDir, stdio: 'inherit' });
 execSync('npm --prefix backend run build', { cwd: rootDir, stdio: 'inherit' });
 
-// 2. Synchronize Backend to api/backend/dist for self-contained Serverless execution
+// 2. Synchronize Backend & Bundle self-contained api/app.js for Vercel Serverless
 console.log('\n[2/4] Packaging Backend into api/ layer for Vercel...');
 const backendDist = path.join(rootDir, 'backend', 'dist');
 const apiBackendDist = path.join(rootDir, 'api', 'backend', 'dist');
 fs.mkdirSync(apiBackendDist, { recursive: true });
 fs.cpSync(backendDist, apiBackendDist, { recursive: true });
+
+console.log('Bundling backend into api/app.js with esbuild...');
+const esbuildCmd = [
+  'npx --yes esbuild backend/src/app.ts',
+  '--bundle',
+  '--platform=node',
+  '--target=node18',
+  '--format=cjs',
+  '--outfile=api/app.js',
+  '--external:mongodb-memory-server',
+  '--external:express',
+  '--external:mongoose',
+  '--external:cors',
+  '--external:helmet',
+  '--external:morgan',
+  '--external:compression',
+  '--external:express-rate-limit',
+  '--external:bcryptjs',
+  '--external:jsonwebtoken',
+  '--external:xlsx',
+  '--external:csv-parse',
+  '--external:nodemailer',
+  '--external:zod',
+  '--external:dotenv'
+].join(' ');
+
+try {
+  execSync(esbuildCmd, { cwd: rootDir, stdio: 'inherit' });
+  console.log('✓ Successfully created self-contained api/app.js');
+} catch (bundleErr) {
+  console.warn('Notice: esbuild bundling note, fallback to compiled dist:', bundleErr.message);
+}
 
 // 3. Install & Build Frontend
 console.log('\n[3/4] Building Frontend Vite Application...');

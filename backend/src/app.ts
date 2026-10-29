@@ -63,8 +63,8 @@ const authLimiter = rateLimit({
 app.use(['/api/auth/login', '/auth/login'], authLimiter);
 app.use(['/api/auth/register', '/auth/register'], authLimiter);
 
-// Health Check
-app.get(['/api/health', '/health'], (req: Request, res: Response) => {
+// Health Check (handles /api/health, /health, /api, and root ping)
+app.get(['/api/health', '/health', '/api', '/'], (req: Request, res: Response) => {
   sendSuccess(
     res,
     {

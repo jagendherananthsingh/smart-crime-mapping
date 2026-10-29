@@ -1,58 +1,51 @@
 const path = require('path');
-const dns = require('dns');
 const dotenv = require('dotenv');
 
-try {
-  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
-} catch (e) {
-  // Ignore in sandboxed runtimes
-}
-
-// Load environment variables from all possible locations
+// Load environment configurations
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../backend/.env') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
 dotenv.config();
 
-let appModule;
+let app;
+let initError = null;
+
 try {
-  appModule = require('./backend/dist/app');
-} catch (e) {
+  // First try the bundled self-contained application
+  const appModule = require('./app');
+  app = appModule.default || appModule;
+} catch (e1) {
   try {
-    appModule = require('../backend/dist/app');
+    const appModule = require('./backend/dist/app');
+    app = appModule.default || appModule;
   } catch (e2) {
-    appModule = require(path.resolve(process.cwd(), 'backend/dist/app'));
-  }
-}
-
-const app = appModule.default || appModule;
-
-let connectDatabase;
-try {
-  connectDatabase = require('./backend/dist/config/database').connectDatabase;
-} catch (e) {
-  try {
-    connectDatabase = require('../backend/dist/config/database').connectDatabase;
-  } catch (e2) {
-    connectDatabase = require(path.resolve(process.cwd(), 'backend/dist/config/database')).connectDatabase;
-  }
-}
-
-let isDbInitialized = false;
-
-module.exports = async (req, res) => {
-  // Initialize database once per serverless execution container
-  if (!isDbInitialized && connectDatabase) {
     try {
-      await connectDatabase();
-    } catch (err) {
-      console.warn('[Vercel Serverless] DB connection note:', err?.message || err);
-    } finally {
-      isDbInitialized = true;
+      const appModule = require('../backend/dist/app');
+      app = appModule.default || appModule;
+    } catch (e3) {
+      initError = { e1: e1.message, e2: e2.message, e3: e3.message, stack: e3.stack };
+      console.error('[Vercel Serverless] Failed to load Express app:', initError);
     }
   }
+}
 
-  // Forward request to Express application
+module.exports = (req, res) => {
+  if (initError || !app) {
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({
+      success: false,
+      error: 'SERVERLESS_INIT_ERROR',
+      message: 'Failed to initialize backend application',
+      details: initError,
+    }));
+    return;
+  }
+
+  // Restore client-requested path from Vercel proxy headers
+  const forwardedUri = req.headers['x-forwarded-uri'] || req.headers['x-real-url'] || req.headers['x-matched-path'];
+  if (forwardedUri && forwardedUri.startsWith('/api')) {
+    req.url = forwardedUri;
+  }
+
   return app(req, res);
 };

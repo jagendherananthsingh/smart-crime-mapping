@@ -3,20 +3,20 @@
   "buildCommand": "node scripts/build.js",
   "outputDirectory": "dist",
   "functions": {
-    "api/**/*.js": {
+    "api/*.js": {
       "memory": 1024,
       "maxDuration": 30,
-      "includeFiles": "backend/dist/**,api/backend/dist/**,backend/.env*,.env*,data/**"
+      "includeFiles": "api/**,data/**,.env*"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api"
+      "destination": "/api/index.js"
     },
     {
       "source": "/api",
-      "destination": "/api"
+      "destination": "/api/index.js"
     },
     {
       "source": "/(.*)",
