@@ -29,12 +29,24 @@ execSync('npm --prefix frontend install && npm --prefix frontend run build', {
   stdio: 'inherit',
 });
 
-// 4. Synchronize Frontend to root dist
+// 4. Synchronize Frontend to root dist and prepare SPA fallback safeguards
 console.log('\n[4/4] Synchronizing Frontend artifacts into root ./dist ...');
 const frontendDist = path.join(rootDir, 'frontend', 'dist');
 const rootDist = path.join(rootDir, 'dist');
 fs.mkdirSync(rootDist, { recursive: true });
 fs.cpSync(frontendDist, rootDist, { recursive: true });
+
+// Ensure 404.html exists as a duplicate of index.html for static edge fallbacks
+const indexHtmlPath = path.join(rootDist, 'index.html');
+const fallbackHtmlPath = path.join(rootDist, '404.html');
+if (fs.existsSync(indexHtmlPath)) {
+  fs.copyFileSync(indexHtmlPath, fallbackHtmlPath);
+  console.log('✓ Created 404.html SPA fallback in ./dist');
+}
+
+// Write SPA redirect rules
+fs.writeFileSync(path.join(rootDist, '_redirects'), '/*    /index.html   200\n', 'utf-8');
+console.log('✓ Generated _redirects SPA route table in ./dist');
 
 console.log('\n==================================================');
 console.log('SUCCESS: Fullstack application compiled and verified for Vercel!');

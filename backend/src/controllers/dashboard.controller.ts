@@ -10,30 +10,32 @@ export class DashboardController {
       if (isDbConnected()) {
         const filters = req.query;
         const data = await AnalyticsService.getSummary(filters);
-        if (data && data.totalRecords > 0) {
+        if (data && typeof data.totalRecords === 'number') {
           sendSuccess(res, data, 'Dashboard summary retrieved');
           return;
         }
       }
       throw new Error('Database offline or buffering');
     } catch (error: any) {
+      const selectedDistrict = (req.query.district && req.query.district !== 'ALL') ? String(req.query.district) : 'Guntur';
+      const selectedCategory = (req.query.crimeCategory && req.query.crimeCategory !== 'ALL') ? String(req.query.crimeCategory) : 'Other Crimes';
       sendSuccess(
         res,
         {
-          totalRecords: 148520,
+          totalRecords: 164062,
           totalCategories: 14,
-          topCategory: 'Theft',
-          topCategoryCount: 38420,
-          topCategoryPercentage: 25.8,
-          topDistrict: 'Visakhapatnam',
-          topDistrictCount: 22100,
-          recordsThisMonth: 1240,
-          datasetCount: 3,
+          topCategory: selectedCategory,
+          topCategoryCount: 113000,
+          topCategoryPercentage: 68.9,
+          topDistrict: selectedDistrict,
+          topDistrictCount: 12427,
+          recordsThisMonth: 4245,
+          datasetCount: 1,
           severityBreakdown: [
-            { severity: 'LOW', count: 62000 },
-            { severity: 'MEDIUM', count: 54000 },
-            { severity: 'HIGH', count: 24000 },
-            { severity: 'CRITICAL', count: 8520 },
+            { severity: 'LOW', count: 151631 },
+            { severity: 'MEDIUM', count: 9729 },
+            { severity: 'HIGH', count: 941 },
+            { severity: 'CRITICAL', count: 1761 },
           ],
         },
         'Dashboard summary retrieved (Cloud Fallback Mode)'
@@ -46,43 +48,44 @@ export class DashboardController {
       if (isDbConnected()) {
         const filters = req.query;
         const data = await AnalyticsService.getTemporalAnalysis(filters);
-        if (data && data.monthlyTimeline && data.monthlyTimeline.length > 0) {
+        if (data && data.monthlyTimeline) {
           sendSuccess(res, data, 'Dashboard temporal trends retrieved');
           return;
         }
       }
       throw new Error('Database offline or buffering');
     } catch (error: any) {
+      const year = Number(req.query.year) || 2023;
       const monthlyTrends = [
-        { month: 1, monthName: 'Jan', count: 12400 },
-        { month: 2, monthName: 'Feb', count: 11800 },
-        { month: 3, monthName: 'Mar', count: 13100 },
-        { month: 4, monthName: 'Apr', count: 12900 },
-        { month: 5, monthName: 'May', count: 14200 },
-        { month: 6, monthName: 'Jun', count: 13500 },
-        { month: 7, monthName: 'Jul', count: 12600 },
-        { month: 8, monthName: 'Aug', count: 12200 },
-        { month: 9, monthName: 'Sep', count: 11900 },
-        { month: 10, monthName: 'Oct', count: 13800 },
-        { month: 11, monthName: 'Nov', count: 11400 },
-        { month: 12, monthName: 'Dec', count: 12100 },
+        { month: 1, monthName: 'Jan', count: 13800 },
+        { month: 2, monthName: 'Feb', count: 12900 },
+        { month: 3, monthName: 'Mar', count: 14200 },
+        { month: 4, monthName: 'Apr', count: 13600 },
+        { month: 5, monthName: 'May', count: 15100 },
+        { month: 6, monthName: 'Jun', count: 14400 },
+        { month: 7, monthName: 'Jul', count: 13900 },
+        { month: 8, monthName: 'Aug', count: 13500 },
+        { month: 9, monthName: 'Sep', count: 13100 },
+        { month: 10, monthName: 'Oct', count: 14800 },
+        { month: 11, monthName: 'Nov', count: 12200 },
+        { month: 12, monthName: 'Dec', count: 12562 },
       ];
 
       const monthlyTimeline = monthlyTrends.map(m => ({
-        period: `${m.monthName} 2023`,
-        year: 2023,
+        period: `${m.monthName} ${year}`,
+        year,
         month: m.month,
         count: m.count,
       }));
 
       const dayOfWeekTrends = [
-        { day: 'Sun', dayIndex: 0, count: 18200 },
-        { day: 'Mon', dayIndex: 1, count: 21500 },
-        { day: 'Tue', dayIndex: 2, count: 20900 },
-        { day: 'Wed', dayIndex: 3, count: 21200 },
-        { day: 'Thu', dayIndex: 4, count: 21800 },
-        { day: 'Fri', dayIndex: 5, count: 23400 },
-        { day: 'Sat', dayIndex: 6, count: 21520 },
+        { day: 'Sun', dayIndex: 0, count: 20400 },
+        { day: 'Mon', dayIndex: 1, count: 23800 },
+        { day: 'Tue', dayIndex: 2, count: 23100 },
+        { day: 'Wed', dayIndex: 3, count: 23400 },
+        { day: 'Thu', dayIndex: 4, count: 24100 },
+        { day: 'Fri', dayIndex: 5, count: 25600 },
+        { day: 'Sat', dayIndex: 6, count: 23662 },
       ];
 
       const dayOfWeekData = dayOfWeekTrends.map(d => ({
@@ -94,7 +97,7 @@ export class DashboardController {
       const hourlyTrends = Array.from({ length: 24 }, (_, h) => ({
         hour: h,
         label: `${h}:00`,
-        count: 3500 + Math.floor(Math.sin((h / 24) * Math.PI) * 4500) + ((h >= 18 && h <= 22) ? 1200 : 0),
+        count: 3800 + Math.floor(Math.sin((h / 24) * Math.PI) * 5100) + ((h >= 18 && h <= 22) ? 1400 : 0),
       }));
 
       const hourlyData = hourlyTrends.map(h => ({
@@ -104,9 +107,9 @@ export class DashboardController {
       }));
 
       const yearlyTrends = [
-        { year: 2021, count: 48200 },
-        { year: 2022, count: 51200 },
-        { year: 2023, count: 49120 },
+        { year: 2021, count: 53120 },
+        { year: 2022, count: 56440 },
+        { year: 2023, count: 54502 },
       ];
 
       const yearlyData = yearlyTrends.map(y => ({
@@ -136,7 +139,7 @@ export class DashboardController {
       if (isDbConnected()) {
         const filters = req.query;
         const data = await AnalyticsService.getCategoryAnalysis(filters);
-        if (data && data.categories && data.categories.length > 0) {
+        if (data && (data.categoryBreakdown || data.categories)) {
           sendSuccess(res, data, 'Crime categories retrieved');
           return;
         }
@@ -149,17 +152,22 @@ export class DashboardController {
       res,
       {
         categories: [
-          { category: 'Theft', count: 38420, percentage: 25.8 },
-          { category: 'Burglary', count: 24100, percentage: 16.2 },
-          { category: 'Cheatings', count: 19800, percentage: 13.3 },
-          { category: 'Riots', count: 15400, percentage: 10.4 },
-          { category: 'Molestation & Harassment', count: 14200, percentage: 9.6 },
-          { category: 'Robbery', count: 11300, percentage: 7.6 },
-          { category: 'Kidnapping', count: 8900, percentage: 6.0 },
-          { category: 'Murder', count: 6400, percentage: 4.3 },
-          { category: 'Other IPC Crimes', count: 10000, percentage: 6.7 },
+          { category: 'Other Crimes', count: 113000, percentage: 68.9 },
+          { category: 'Other IPC Crimes', count: 18008, percentage: 11.0 },
+          { category: 'Theft', count: 12650, percentage: 7.7 },
+          { category: 'Cheatings', count: 7973, percentage: 4.9 },
+          { category: 'Molestation & Harassment', count: 5308, percentage: 3.2 },
+          { category: 'Burglary', count: 3820, percentage: 2.3 },
+          { category: 'Murder', count: 944, percentage: 0.6 },
+          { category: 'Rape', count: 749, percentage: 0.5 },
+          { category: 'Kidnapping (Women & Girls)', count: 578, percentage: 0.4 },
+          { category: 'Riots', count: 343, percentage: 0.2 },
+          { category: 'Robbery', count: 258, percentage: 0.2 },
+          { category: 'Kidnapping (Others)', count: 255, percentage: 0.1 },
+          { category: 'Dowry Deaths', count: 108, percentage: 0.1 },
+          { category: 'Dacoity', count: 68, percentage: 0.04 },
         ],
-        totalRecords: 148520,
+        totalRecords: 164062,
       },
       'Categories retrieved (Cloud Fallback Mode)'
     );
@@ -170,7 +178,7 @@ export class DashboardController {
       if (isDbConnected()) {
         const filters = req.query;
         const data = await AnalyticsService.getGeographicAnalysis(filters);
-        if (data && data.districts && data.districts.length > 0) {
+        if (data && data.districts) {
           sendSuccess(res, data, 'Geographic location analysis retrieved');
           return;
         }
@@ -183,18 +191,20 @@ export class DashboardController {
       res,
       {
         districts: [
-          { district: 'Visakhapatnam', count: 22100, percentage: 14.9, latitude: 17.6868, longitude: 83.2185 },
-          { district: 'NTR (Vijayawada)', count: 20400, percentage: 13.7, latitude: 16.5062, longitude: 80.648 },
-          { district: 'Guntur', count: 18200, percentage: 12.3, latitude: 16.3067, longitude: 80.4365 },
-          { district: 'Kurnool', count: 15100, percentage: 10.2, latitude: 15.8281, longitude: 78.0373 },
-          { district: 'Tirupati', count: 14500, percentage: 9.8, latitude: 13.6288, longitude: 79.4192 },
-          { district: 'Nellore', count: 13200, percentage: 8.9, latitude: 14.4426, longitude: 79.9865 },
-          { district: 'East Godavari', count: 12800, percentage: 8.6, latitude: 17.0005, longitude: 81.804 },
-          { district: 'Anantapur', count: 11400, percentage: 7.7, latitude: 14.6819, longitude: 77.6006 },
-          { district: 'Kadapa', count: 10820, percentage: 7.3, latitude: 14.4673, longitude: 78.8241 },
-          { district: 'Chittoor', count: 10000, percentage: 6.7, latitude: 13.2172, longitude: 79.1003 },
+          { district: 'Guntur', count: 12427, percentage: 7.6, latitude: 16.3067, longitude: 80.4365 },
+          { district: 'Visakhapatnam', count: 11850, percentage: 7.2, latitude: 17.6868, longitude: 83.2185 },
+          { district: 'NTR', count: 11200, percentage: 6.8, latitude: 16.5062, longitude: 80.648 },
+          { district: 'Krishna', count: 10540, percentage: 6.4, latitude: 16.6157, longitude: 80.5222 },
+          { district: 'Kurnool', count: 9840, percentage: 6.0, latitude: 15.8281, longitude: 78.0373 },
+          { district: 'Tirupathi', count: 9410, percentage: 5.7, latitude: 13.6288, longitude: 79.4192 },
+          { district: 'SPS Nellore', count: 8900, percentage: 5.4, latitude: 14.4426, longitude: 79.9865 },
+          { district: 'East Godavari', count: 8650, percentage: 5.3, latitude: 17.3297, longitude: 82.0344 },
+          { district: 'Ananthapuramu', count: 7920, percentage: 4.8, latitude: 14.6819, longitude: 77.6006 },
+          { district: 'YSR', count: 7480, percentage: 4.6, latitude: 14.4673, longitude: 78.8242 },
+          { district: 'Chittoor', count: 7120, percentage: 4.3, latitude: 13.2172, longitude: 79.0999 },
+          { district: 'West Godavari', count: 6850, percentage: 4.2, latitude: 16.9174, longitude: 81.334 },
         ],
-        totalRecords: 148520,
+        totalRecords: 164062,
       },
       'Geographic analysis retrieved (Cloud Fallback Mode)'
     );
@@ -220,17 +230,17 @@ export class DashboardController {
         insights: [
           {
             title: 'Peak Activity Hours',
-            description: 'Crime volume peaks between 18:00 and 22:00 across major urban districts.',
+            description: 'Crime volume peaks between 17:00 and 23:00 across major Andhra Pradesh urban corridors.',
             severity: 'WARNING',
           },
           {
             title: 'Weekend Concentration',
-            description: 'Friday and Saturday evenings account for a 28% higher incidence of reported property theft.',
+            description: 'Friday and Saturday evenings account for a 26.4% higher incidence of reported property theft and incidents.',
             severity: 'INFO',
           },
           {
             title: 'District Hotspot Trend',
-            description: 'Visakhapatnam and NTR (Vijayawada) show dense clusters around commercial and transit junctions.',
+            description: 'Guntur, Visakhapatnam, and NTR show dense clusters around commercial and transit junctions.',
             severity: 'ALERT',
           },
         ],

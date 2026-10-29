@@ -261,6 +261,20 @@ const seedUsers = async () => {
     console.log(`[Import] Created Admin User: ${adminEmail}`);
   }
 
+  const policeEmail = 'police@crimeanalytics.local';
+  let police = await User.findOne({ email: policeEmail });
+  if (!police) {
+    const policeHash = await bcrypt.hash('Police@12345', 10);
+    await User.create({
+      name: 'Superintendent of Police',
+      email: policeEmail,
+      passwordHash: policeHash,
+      role: 'POLICE',
+      isActive: true,
+    });
+    console.log(`[Import] Created Police User: ${policeEmail}`);
+  }
+
   const testerEmail = 'tester@crimeanalytics.local';
   let tester = await User.findOne({ email: testerEmail });
   if (!tester) {
@@ -269,10 +283,24 @@ const seedUsers = async () => {
       name: 'Research Analyst (Tester)',
       email: testerEmail,
       passwordHash: testerHash,
-      role: 'TESTER',
+      role: 'USER',
       isActive: true,
     });
     console.log(`[Import] Created Tester User: ${testerEmail}`);
+  }
+
+  const user1Email = 'user1@crimeanalytics.local';
+  let user1 = await User.findOne({ email: user1Email });
+  if (!user1) {
+    const user1Hash = await bcrypt.hash('User1@12345', 10);
+    await User.create({
+      name: 'Public Citizen (User 1)',
+      email: user1Email,
+      passwordHash: user1Hash,
+      role: 'USER',
+      isActive: true,
+    });
+    console.log(`[Import] Created Citizen User: ${user1Email}`);
   }
 };
 

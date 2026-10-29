@@ -1,7 +1,14 @@
 const path = require('path');
+const dns = require('dns');
 const dotenv = require('dotenv');
 
-// Load environment variables from both root .env and backend/.env
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+} catch (e) {
+  // Ignore in sandboxed runtimes
+}
+
+// Load environment variables from all possible locations
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../backend/.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });

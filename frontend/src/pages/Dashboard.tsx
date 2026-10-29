@@ -48,40 +48,41 @@ export const Dashboard: React.FC = () => {
   }>({ districts: [], categories: [], years: [] });
 
   const DEFAULT_SUMMARY: DashboardSummary = {
-    totalRecords: 148520,
+    totalRecords: 164062,
     totalCategories: 14,
-    topCategory: 'Theft',
-    topCategoryCount: 38420,
-    topCategoryPercentage: 25.8,
-    topDistrict: 'Visakhapatnam',
-    topDistrictCount: 22100,
-    recordsThisMonth: 1240,
-    datasetCount: 3,
+    topCategory: 'Other Crimes',
+    topCategoryCount: 113000,
+    topCategoryPercentage: 68.9,
+    topDistrict: 'Guntur',
+    topDistrictCount: 12427,
+    recordsThisMonth: 4245,
+    datasetCount: 1,
     severityBreakdown: [
-      { severity: 'LOW', count: 62000 },
-      { severity: 'MEDIUM', count: 54000 },
-      { severity: 'HIGH', count: 24000 },
-      { severity: 'CRITICAL', count: 8520 },
+      { severity: 'LOW', count: 151631 },
+      { severity: 'MEDIUM', count: 9729 },
+      { severity: 'HIGH', count: 941 },
+      { severity: 'CRITICAL', count: 1761 },
     ],
   };
 
   const DEFAULT_CATEGORIES = [
-    { category: 'Theft', count: 38420, percentage: 25.8 },
-    { category: 'Burglary', count: 24100, percentage: 16.2 },
-    { category: 'Cheatings', count: 19800, percentage: 13.3 },
-    { category: 'Riots', count: 15400, percentage: 10.4 },
-    { category: 'Molestation & Harassment', count: 14200, percentage: 9.6 },
-    { category: 'Robbery', count: 11300, percentage: 7.6 },
-    { category: 'Kidnapping', count: 8900, percentage: 6.0 },
-    { category: 'Murder', count: 6400, percentage: 4.3 },
+    { category: 'Other Crimes', count: 113000, percentage: 68.9 },
+    { category: 'Other IPC Crimes', count: 18008, percentage: 11.0 },
+    { category: 'Theft', count: 12650, percentage: 7.7 },
+    { category: 'Cheatings', count: 7973, percentage: 4.9 },
+    { category: 'Molestation & Harassment', count: 5308, percentage: 3.2 },
+    { category: 'Burglary', count: 3820, percentage: 2.3 },
+    { category: 'Murder', count: 944, percentage: 0.6 },
+    { category: 'Rape', count: 749, percentage: 0.5 },
   ];
 
   const DEFAULT_LOCATIONS = [
-    { district: 'Visakhapatnam', count: 22100, percentage: 14.9, latitude: 17.6868, longitude: 83.2185 },
-    { district: 'NTR (Vijayawada)', count: 20400, percentage: 13.7, latitude: 16.5062, longitude: 80.648 },
-    { district: 'Guntur', count: 18200, percentage: 12.3, latitude: 16.3067, longitude: 80.4365 },
-    { district: 'Kurnool', count: 15100, percentage: 10.2, latitude: 15.8281, longitude: 78.0373 },
-    { district: 'Tirupati', count: 14500, percentage: 9.8, latitude: 13.6288, longitude: 79.4192 },
+    { district: 'Guntur', count: 12427, percentage: 7.6, latitude: 16.3067, longitude: 80.4365 },
+    { district: 'Visakhapatnam', count: 11850, percentage: 7.2, latitude: 17.6868, longitude: 83.2185 },
+    { district: 'NTR', count: 11200, percentage: 6.8, latitude: 16.5062, longitude: 80.648 },
+    { district: 'Krishna', count: 10540, percentage: 6.4, latitude: 16.6157, longitude: 80.5222 },
+    { district: 'Kurnool', count: 9840, percentage: 6.0, latitude: 15.8281, longitude: 78.0373 },
+    { district: 'Tirupathi', count: 9410, percentage: 5.7, latitude: 13.6288, longitude: 79.4192 },
   ];
 
   const [summary, setSummary] = useState<DashboardSummary>(DEFAULT_SUMMARY);

@@ -30,7 +30,7 @@ export class DatasetController {
             name: 'Andhra Pradesh State Crime Dataset (2021-2023)',
             description: 'Official historical police record repository covering 26 AP districts, 14 crime categories, and hourly incident timestamps.',
             filename: 'ap_crime_data_master_2021_2023.csv',
-            recordCount: 148520,
+            recordCount: 164062,
             columns: ['caseId', 'date', 'district', 'locationName', 'crimeCategory', 'crimeType', 'hour', 'severity', 'latitude', 'longitude'],
             uploadedBy: 'Prof. CSE Data Science (GIST)',
             status: 'READY',

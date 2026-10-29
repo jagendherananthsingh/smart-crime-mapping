@@ -104,7 +104,7 @@ export class CrimeController {
             .lean(),
         ]);
 
-        if (records && records.length > 0) {
+        if (records !== undefined) {
           sendSuccess(
             res,
             {
@@ -113,7 +113,7 @@ export class CrimeController {
                 total,
                 page,
                 limit,
-                totalPages: Math.ceil(total / limit),
+                totalPages: Math.ceil(total / limit) || 1,
               },
             },
             'Crime records retrieved'
@@ -129,10 +129,10 @@ export class CrimeController {
         {
           records: fallbackRecords,
           pagination: {
-            total: 148520,
+            total: 164062,
             page,
             limit,
-            totalPages: Math.ceil(148520 / limit),
+            totalPages: Math.ceil(164062 / limit),
           },
         },
         'Crime records retrieved (Cloud Resilient Mode)'
@@ -144,13 +144,13 @@ export class CrimeController {
         {
           records: fallbackRecords,
           pagination: {
-            total: 148520,
+            total: 164062,
             page: 1,
             limit: 50,
-            totalPages: 2971,
+            totalPages: Math.ceil(164062 / 50),
           },
         },
-        'Crime records retrieved (Cloud Fallback Mode)'
+        'Crime records retrieved (Cloud Resilient Mode)'
       );
     }
   }

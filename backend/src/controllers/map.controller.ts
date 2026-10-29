@@ -19,7 +19,7 @@ export class MapController {
           .limit(limit)
           .lean();
 
-        if (markers && markers.length > 0) {
+        if (markers !== undefined) {
           sendSuccess(res, markers, 'Map markers retrieved');
           return;
         }
@@ -50,7 +50,7 @@ export class MapController {
           .limit(2000)
           .lean();
 
-        if (records && records.length > 0) {
+        if (records !== undefined) {
           const points = records.map((r) => [
             r.latitude,
             r.longitude,
