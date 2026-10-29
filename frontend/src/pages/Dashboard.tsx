@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import {
@@ -33,6 +33,39 @@ import { CategoryBarChart } from '../charts/CategoryBarChart';
 import { DistributionDonutChart } from '../charts/DistributionDonutChart';
 import { CrimeMap } from '../maps/CrimeMap';
 import { formatNumber } from '../utils/formatters';
+import { getDistrictMetrics, normalizeDistrictName, STATE_METRICS } from '../data/districtMetrics';
+
+export const ALL_AP_DISTRICTS = [
+  'Alluri Sitharama Raju',
+  'Anakapalli',
+  'Anantapur',
+  'Annamayya',
+  'Bapatla',
+  'Chittoor',
+  'Dr.B.R.Ambedkar Konaseema',
+  'East Godavari',
+  'Eluru',
+  'Guntakal Railway',
+  'Guntur',
+  'Kakinada',
+  'Krishna',
+  'Kurnool',
+  'NTR (Vijayawada)',
+  'Nandyal',
+  'Palnadu',
+  'Parvathipuram Manyam',
+  'Prakasam',
+  'Rajamahendravaram',
+  'SPS Nellore',
+  'Sri Sathya Sai',
+  'Srikakulam',
+  'Tirupati',
+  'Vijayawada Railway',
+  'Visakhapatnam',
+  'Vizianagaram',
+  'West Godavari',
+  'YSR Kadapa',
+];
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -45,44 +78,30 @@ export const Dashboard: React.FC = () => {
     districts: string[];
     categories: string[];
     years: number[];
-  }>({ districts: [], categories: [], years: [] });
+  }>({ districts: ALL_AP_DISTRICTS, categories: [], years: [2023, 2022, 2021] });
 
   const DEFAULT_SUMMARY: DashboardSummary = {
-    totalRecords: 164062,
-    totalCategories: 14,
-    topCategory: 'Other Crimes',
-    topCategoryCount: 113000,
-    topCategoryPercentage: 68.9,
+    totalRecords: STATE_METRICS.totalRecords,
+    totalCategories: STATE_METRICS.categories.length,
+    topCategory: STATE_METRICS.topCategory,
+    topCategoryCount: STATE_METRICS.topCategoryCount,
+    topCategoryPercentage: STATE_METRICS.topCategoryPercentage,
     topDistrict: 'Guntur',
-    topDistrictCount: 12427,
+    topDistrictCount: 28114,
     recordsThisMonth: 4245,
     datasetCount: 1,
-    severityBreakdown: [
-      { severity: 'LOW', count: 151631 },
-      { severity: 'MEDIUM', count: 9729 },
-      { severity: 'HIGH', count: 941 },
-      { severity: 'CRITICAL', count: 1761 },
-    ],
+    severityBreakdown: STATE_METRICS.severityBreakdown as any,
   };
 
-  const DEFAULT_CATEGORIES = [
-    { category: 'Other Crimes', count: 113000, percentage: 68.9 },
-    { category: 'Other IPC Crimes', count: 18008, percentage: 11.0 },
-    { category: 'Theft', count: 12650, percentage: 7.7 },
-    { category: 'Cheatings', count: 7973, percentage: 4.9 },
-    { category: 'Molestation & Harassment', count: 5308, percentage: 3.2 },
-    { category: 'Burglary', count: 3820, percentage: 2.3 },
-    { category: 'Murder', count: 944, percentage: 0.6 },
-    { category: 'Rape', count: 749, percentage: 0.5 },
-  ];
+  const DEFAULT_CATEGORIES = STATE_METRICS.categories.slice(0, 8);
 
   const DEFAULT_LOCATIONS = [
-    { district: 'Guntur', count: 12427, percentage: 7.6, latitude: 16.3067, longitude: 80.4365 },
-    { district: 'Visakhapatnam', count: 11850, percentage: 7.2, latitude: 17.6868, longitude: 83.2185 },
-    { district: 'NTR', count: 11200, percentage: 6.8, latitude: 16.5062, longitude: 80.648 },
-    { district: 'Krishna', count: 10540, percentage: 6.4, latitude: 16.6157, longitude: 80.5222 },
-    { district: 'Kurnool', count: 9840, percentage: 6.0, latitude: 15.8281, longitude: 78.0373 },
-    { district: 'Tirupathi', count: 9410, percentage: 5.7, latitude: 13.6288, longitude: 79.4192 },
+    { district: 'Visakhapatnam', count: 29231, percentage: 5.9, latitude: 17.6868, longitude: 83.2185 },
+    { district: 'NTR (Vijayawada)', count: 34561, percentage: 7.0, latitude: 16.5062, longitude: 80.648 },
+    { district: 'Guntur', count: 28114, percentage: 5.7, latitude: 16.3067, longitude: 80.4365 },
+    { district: 'Kurnool', count: 26491, percentage: 5.4, latitude: 15.8281, longitude: 78.0373 },
+    { district: 'Tirupati', count: 18727, percentage: 3.8, latitude: 13.6288, longitude: 79.4192 },
+    { district: 'SPS Nellore', count: 22237, percentage: 4.5, latitude: 14.4426, longitude: 79.9865 },
   ];
 
   const [summary, setSummary] = useState<DashboardSummary>(DEFAULT_SUMMARY);
@@ -99,14 +118,16 @@ export const Dashboard: React.FC = () => {
     const fetchFilters = async () => {
       try {
         const res = await crimeApi.getFilterOptions();
+        const serverDists = res.data?.districts || [];
+        const mergedDists = Array.from(new Set([...ALL_AP_DISTRICTS, ...serverDists])).sort();
         setFilterData({
-          districts: res.data?.districts || [],
+          districts: mergedDists,
           categories: res.data?.categories || [],
-          years: res.data?.years || [],
+          years: res.data?.years || [2023, 2022, 2021],
         });
       } catch {
         setFilterData({
-          districts: ['Visakhapatnam', 'NTR (Vijayawada)', 'Guntur', 'Tirupati', 'Kurnool', 'SPS Nellore'],
+          districts: ALL_AP_DISTRICTS,
           categories: ['Theft', 'Burglary', 'Robbery', 'Riots', 'Cheatings', 'Molestation & Harassment'],
           years: [2023, 2022, 2021],
         });
@@ -178,11 +199,116 @@ export const Dashboard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
+  // Active district metrics (instant dynamic responsiveness)
+  const currentDistrictMetrics = useMemo(() => {
+    return getDistrictMetrics(filters.district);
+  }, [filters.district]);
+
+  const isDistrictFiltered = Boolean(filters.district && filters.district !== 'ALL');
+
+  // Compute dynamic KPI values
+  const activeTotalRecords = useMemo(() => {
+    if (filters.year && currentDistrictMetrics.yearly[filters.year]) {
+      return currentDistrictMetrics.yearly[filters.year];
+    }
+    if (isDistrictFiltered) {
+      if (
+        summary &&
+        (normalizeDistrictName(summary.topDistrict) === normalizeDistrictName(filters.district) ||
+          normalizeDistrictName((summary as any).district) === normalizeDistrictName(filters.district))
+      ) {
+        return summary.totalRecords;
+      }
+      return currentDistrictMetrics.totalRecords;
+    }
+    return summary?.totalRecords || currentDistrictMetrics.totalRecords;
+  }, [filters.year, filters.district, isDistrictFiltered, summary, currentDistrictMetrics]);
+
+  const activeCategories = useMemo(() => {
+    if (isDistrictFiltered) {
+      if (categories && categories.length > 0 && (categories[0] as any)?.district === filters.district) {
+        return categories;
+      }
+      return currentDistrictMetrics.categories;
+    }
+    return categories && categories.length > 0 ? categories : currentDistrictMetrics.categories;
+  }, [isDistrictFiltered, categories, currentDistrictMetrics, filters.district]);
+
+  // Compute specific crime categories (excluding generic administrative/local act buckets for clear citizen insights)
+  const specificCategories = useMemo(() => {
+    return activeCategories.filter((c: any) => {
+      const name = (c.category || c._id || c.name || '').trim();
+      return name !== 'Other Crimes' && name !== 'Other IPC Crimes';
+    });
+  }, [activeCategories]);
+
+  // Leading specific crime category for the KPI card
+  const leadingCategory = useMemo(() => {
+    if (specificCategories.length > 0) {
+      return {
+        category: specificCategories[0].category || specificCategories[0]._id || specificCategories[0].name,
+        count: specificCategories[0].count,
+      };
+    }
+    return {
+      category: currentDistrictMetrics.topCategory || 'Theft',
+      count: currentDistrictMetrics.topCategoryCount || 0,
+    };
+  }, [specificCategories, currentDistrictMetrics]);
+
+  const activeTopCategory = isDistrictFiltered
+    ? (summary && normalizeDistrictName(summary.topDistrict) === normalizeDistrictName(filters.district)
+        ? summary.topCategory
+        : leadingCategory.category)
+    : (summary?.topCategory || leadingCategory.category);
+
+  const activeTopCategoryCount = isDistrictFiltered
+    ? (summary && normalizeDistrictName(summary.topDistrict) === normalizeDistrictName(filters.district)
+        ? summary.topCategoryCount
+        : leadingCategory.count)
+    : (summary?.topCategoryCount || leadingCategory.count);
+
+  const activeDivision = isDistrictFiltered
+    ? filters.district!
+    : (summary?.topDistrict || 'Visakhapatnam');
+
+  const activeSeverityBreakdown = useMemo(() => {
+    if (isDistrictFiltered) {
+      if (
+        summary?.severityBreakdown &&
+        summary.severityBreakdown.length > 0 &&
+        (normalizeDistrictName(summary.topDistrict) === normalizeDistrictName(filters.district) ||
+          normalizeDistrictName((summary as any).district) === normalizeDistrictName(filters.district))
+      ) {
+        return summary.severityBreakdown;
+      }
+      return currentDistrictMetrics.severityBreakdown;
+    }
+    return summary?.severityBreakdown && summary.severityBreakdown.length > 0
+      ? summary.severityBreakdown
+      : currentDistrictMetrics.severityBreakdown;
+  }, [isDistrictFiltered, summary, currentDistrictMetrics, filters.district]);
+
+  const activeCriticalCount = useMemo(() => {
+    return activeSeverityBreakdown
+      ?.filter((s: any) => s.severity === 'HIGH' || s.severity === 'CRITICAL')
+      ?.reduce((a: number, s: any) => a + s.count, 0) ?? 0;
+  }, [activeSeverityBreakdown]);
+
+  const activeSafetyRatio = isDistrictFiltered
+    ? currentDistrictMetrics.safetyRatio
+    : Math.max(100 - Number(((activeCriticalCount / Math.max(activeTotalRecords, 1)) * 100).toFixed(1)), 85);
+
   // Normalize monthly trend data for chart
-  const trendChartData = trends?.monthlyTimeline?.map((t: any) => ({
-    period: t.period,
-    count: t.count,
-  })) || [];
+  const trendChartData = (trends?.monthlyTimeline && trends.monthlyTimeline.length > 0)
+    ? trends.monthlyTimeline.map((t: any) => ({
+        period: t.period,
+        count: t.count,
+      }))
+    : Object.entries(currentDistrictMetrics.yearly).map(([yr, count]) => ({
+        period: `${yr}`,
+        count,
+      }));
 
   // Build hourly breakdown from trends data
   const hourlyBreakdown: Record<number, number> = {};
@@ -191,29 +317,22 @@ export const Dashboard: React.FC = () => {
   });
   const maxHour = Math.max(...Object.values(hourlyBreakdown).map(Number), 1);
 
-  // Summary totals
-  const totalCrimes = summary?.totalRecords ?? (summary as any)?.totalCrimes ?? 0;
-  const criticalCount = (summary as any)?.criticalCount ??
-    summary?.severityBreakdown?.filter(s => s.severity === 'HIGH' || s.severity === 'CRITICAL').reduce((a, s) => a + s.count, 0) ?? 0;
+  // Normalized data for User charts: Top identifiable crime classifications
+  const userCategoryBarData = useMemo(() => {
+    const list = specificCategories.length > 0 ? specificCategories : activeCategories;
+    return list.slice(0, 6).map((c: any) => ({
+      category: c.category || c._id || c.name || 'Category',
+      count: c.count || 0,
+      percentage: c.percentage,
+    }));
+  }, [specificCategories, activeCategories]);
 
-  // Normalized data for User charts
-  const userCategoryBarData = categories.slice(0, 6).map((c: any) => ({
-    category: c.category || c._id || c.name || 'Category',
-    count: c.count || 0,
-    percentage: c.percentage,
-  }));
-
-  const severityPieData = (summary?.severityBreakdown && summary.severityBreakdown.length > 0)
-    ? summary.severityBreakdown.map((s: any) => ({
-        name: `${s.severity || s._id} Severity`,
-        value: s.count,
-      }))
-    : [
-        { name: 'Low Severity', value: 68 },
-        { name: 'Medium Severity', value: 24 },
-        { name: 'High Severity', value: 7 },
-        { name: 'Critical Severity', value: 1 },
-      ];
+  const severityPieData = useMemo(() => {
+    return activeSeverityBreakdown.map((s: any) => ({
+      name: `${s.severity || s._id} Severity`,
+      value: s.count,
+    }));
+  }, [activeSeverityBreakdown]);
 
   if (loading) {
     return (
@@ -302,29 +421,29 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title={isUser ? "Public Monitored Incidents" : "Total Recorded Incidents"}
-          value={formatNumber(totalCrimes)}
-          subtitle="Official AP Police Data"
+          value={formatNumber(activeTotalRecords)}
+          subtitle={isDistrictFiltered ? `${filters.district} District Data` : "Official AP Police Data"}
           icon={ShieldAlert}
           variant="indigo"
         />
         <StatCard
           title={isUser ? "Most Frequent Incident Type" : "Leading Crime Category"}
-          value={summary?.topCategory || '—'}
-          subtitle={`${formatNumber(summary?.topCategoryCount)} recorded`}
+          value={isUser ? leadingCategory.category : (activeTopCategory || leadingCategory.category || '—')}
+          subtitle={`${formatNumber(isUser ? leadingCategory.count : activeTopCategoryCount)} recorded`}
           icon={TrendingUp}
           variant="purple"
         />
         <StatCard
-          title={isUser ? "Highest Monitored Division" : "Primary Hotspot District"}
-          value={summary?.topDistrict || '—'}
-          subtitle={isUser ? "Active Police Vigilance Area" : "Highest incident density"}
+          title={isUser ? (isDistrictFiltered ? "Selected District Division" : "Highest Monitored Division") : (isDistrictFiltered ? "Selected Division Focus" : "Primary Hotspot District")}
+          value={activeDivision}
+          subtitle={isUser ? (isDistrictFiltered ? "Active Police Jurisdiction Area" : "Active Police Vigilance Area") : "Highest incident density"}
           icon={MapPin}
           variant="amber"
         />
         <StatCard
           title={isUser ? "Public Safety Vigilance Ratio" : "High & Critical Severity"}
-          value={isUser ? `${Math.max(100 - Number(((criticalCount / Math.max(totalCrimes, 1)) * 100).toFixed(1)), 85)}%` : formatNumber(criticalCount)}
-          subtitle={isUser ? "Standard Non-Violent / Managed" : `${((criticalCount / Math.max(totalCrimes, 1)) * 100).toFixed(1)}% of total volume`}
+          value={isUser ? `${activeSafetyRatio}%` : formatNumber(activeCriticalCount)}
+          subtitle={isUser ? "Standard Non-Violent / Managed" : `${((activeCriticalCount / Math.max(activeTotalRecords, 1)) * 100).toFixed(1)}% of total volume`}
           icon={isUser ? ShieldCheck : AlertTriangle}
           variant={isUser ? "emerald" : "rose"}
         />
@@ -341,7 +460,7 @@ export const Dashboard: React.FC = () => {
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <BarChart2 className="w-4 h-4 text-cyan-400" />
-                    Top Incident Categories in Andhra Pradesh
+                    Top Incident Categories in {isDistrictFiltered ? `${filters.district} District` : 'Andhra Pradesh'}
                   </h3>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 font-semibold border border-cyan-500/20">
                     Public Awareness
@@ -354,7 +473,7 @@ export const Dashboard: React.FC = () => {
               <CategoryBarChart data={userCategoryBarData} height={290} />
               <div className="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
                 <span>Data Source: State Police Incident Repository</span>
-                <span className="text-slate-300 font-medium">Updated 2021–2023</span>
+                <span className="text-slate-300 font-medium">{isDistrictFiltered ? `${filters.district} District` : 'Updated 2021–2023'}</span>
               </div>
             </div>
 
@@ -364,7 +483,7 @@ export const Dashboard: React.FC = () => {
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <PieIcon className="w-4 h-4 text-emerald-400" />
-                    Incident Severity Proportion
+                    Incident Severity Proportion {isDistrictFiltered ? `• ${filters.district}` : '• Classification'}
                   </h3>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 font-semibold border border-emerald-500/20">
                     Classification
@@ -557,7 +676,7 @@ export const Dashboard: React.FC = () => {
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
               <h3 className="text-sm font-bold text-white mb-1">Crime Category Proportion</h3>
               <p className="text-xs text-slate-400 mb-4">Share across major crime types</p>
-              <DistributionDonutChart data={categories} height={300} />
+              <DistributionDonutChart data={activeCategories} height={300} />
             </div>
           </div>
 
@@ -566,7 +685,7 @@ export const Dashboard: React.FC = () => {
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
               <h3 className="text-sm font-bold text-white mb-1">Incidents by Category</h3>
               <p className="text-xs text-slate-400 mb-4">Total counts by classification</p>
-              <CategoryBarChart data={categories} height={280} />
+              <CategoryBarChart data={activeCategories} height={280} />
             </div>
 
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
