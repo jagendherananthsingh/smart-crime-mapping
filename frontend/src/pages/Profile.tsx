@@ -79,11 +79,17 @@ export const Profile: React.FC = () => {
               className={`px-3 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1.5 ${
                 user?.role === 'ADMIN'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : user?.role === 'POLICE'
+                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                   : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              {user?.role === 'ADMIN' ? 'System Administrator' : 'Research Analyst'}
+              {user?.role === 'ADMIN'
+                ? 'System Administrator'
+                : user?.role === 'POLICE'
+                ? 'Law Enforcement Officer'
+                : 'Research Analyst'}
             </span>
           </div>
 

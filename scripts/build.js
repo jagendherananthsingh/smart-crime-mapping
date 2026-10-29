@@ -10,10 +10,8 @@ console.log('==================================================');
 
 // 1. Install & Build Backend
 console.log('\n[1/4] Building Backend TypeScript...');
-execSync('npm --prefix backend install && npm --prefix backend run build', {
-  cwd: rootDir,
-  stdio: 'inherit',
-});
+execSync('npm --prefix backend install', { cwd: rootDir, stdio: 'inherit' });
+execSync('npm --prefix backend run build', { cwd: rootDir, stdio: 'inherit' });
 
 // 2. Synchronize Backend to api/backend/dist for self-contained Serverless execution
 console.log('\n[2/4] Packaging Backend into api/ layer for Vercel...');
@@ -24,10 +22,8 @@ fs.cpSync(backendDist, apiBackendDist, { recursive: true });
 
 // 3. Install & Build Frontend
 console.log('\n[3/4] Building Frontend Vite Application...');
-execSync('npm --prefix frontend install && npm --prefix frontend run build', {
-  cwd: rootDir,
-  stdio: 'inherit',
-});
+execSync('npm --prefix frontend install', { cwd: rootDir, stdio: 'inherit' });
+execSync('npm --prefix frontend run build', { cwd: rootDir, stdio: 'inherit' });
 
 // 4. Synchronize Frontend to root dist and prepare SPA fallback safeguards
 console.log('\n[4/4] Synchronizing Frontend artifacts into root ./dist ...');

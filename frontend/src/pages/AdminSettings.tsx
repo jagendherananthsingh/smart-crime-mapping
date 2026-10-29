@@ -85,15 +85,21 @@ export const AdminSettings: React.FC = () => {
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-800/60">
                 <span className="text-slate-400">Total Crime Records:</span>
-                <span className="font-mono font-bold text-white">{stats?.totalRecords || 1000}</span>
+                <span className="font-mono font-bold text-white">
+                  {(stats?.totalRecords ?? 164062).toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-800/60">
                 <span className="text-slate-400">Registered Analyst Users:</span>
-                <span className="font-mono font-bold text-white">{stats?.totalUsers || 2}</span>
+                <span className="font-mono font-bold text-white">
+                  {(stats?.totalUsers ?? 4).toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-800/60">
                 <span className="text-slate-400">Saved Datasets:</span>
-                <span className="font-mono font-bold text-white">{stats?.totalDatasets || 1}</span>
+                <span className="font-mono font-bold text-white">
+                  {(stats?.totalDatasets ?? 1).toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-800/60">
                 <span className="text-slate-400">Trained Model Baselines:</span>
