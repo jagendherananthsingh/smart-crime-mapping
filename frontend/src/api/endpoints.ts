@@ -21,24 +21,46 @@ export const authApi = {
       const res = await apiClient.post<ApiResponse<{ token: string; user: User }>>('/auth/login', credentials);
       return res.data;
     } catch (err: any) {
+      // If server responded with an authentication error (400, 401, 403), rethrow to display proper error
+      if (err.response && err.response.status >= 400 && err.response.status < 500) {
+        throw err;
+      }
+
+      // Resilient fallback only on network failure / 500 server error
       if (!err.response || err?.response?.status >= 500) {
         console.warn('[Auth] Server/Database offline. Entering resilient session mode.');
-        const isUser1 = credentials.email.includes('user1');
-        const isUser2 = credentials.email.includes('user2');
-        const isTester = credentials.email.includes('tester');
-        const isUser = isUser1 || isUser2 || isTester;
+        const norm = credentials.email.toLowerCase().trim();
+        const isAdmin = norm.includes('admin');
+        const isPolice = norm.includes('police');
 
-        let name = credentials.email.split('@')[0].toUpperCase();
-        if (isUser1) name = 'Public Citizen (User 1)';
-        else if (isUser2) name = 'Community Member (User 2)';
-        else if (isTester) name = 'Research Analyst (Tester)';
-        else if (!isUser) name = 'Administrator';
+        let role: 'ADMIN' | 'POLICE' | 'USER' = 'USER';
+        let name = credentials.email.split('@')[0];
+
+        if (isAdmin) {
+          role = 'ADMIN';
+          name = 'Administrator';
+        } else if (isPolice) {
+          role = 'POLICE';
+          name = 'AP Police Officer';
+        } else if (norm.includes('tester')) {
+          role = 'USER';
+          name = 'Research Analyst (Tester)';
+        } else if (norm.includes('user1')) {
+          role = 'USER';
+          name = 'Public Citizen (User 1)';
+        } else if (norm.includes('user2')) {
+          role = 'USER';
+          name = 'Community Member (User 2)';
+        } else {
+          role = 'USER';
+          name = credentials.email.split('@')[0];
+        }
 
         const fallbackUser: User = {
-          _id: isUser ? `${credentials.email.split('@')[0]}_id` : 'admin_resilient_id',
+          _id: `${norm.replace(/[^a-zA-Z0-9]/g, '_')}_id`,
           name,
           email: credentials.email,
-          role: isUser ? 'USER' : 'ADMIN',
+          role,
           isActive: true,
         };
         return {

@@ -58,6 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (credentials: { email: string; password: string }) => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     const res = await authApi.login(credentials);
     if (res.success && res.data) {
       _setSession(res.data.token, res.data.user);
