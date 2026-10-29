@@ -24774,15 +24774,17 @@ var errorHandler = (err, req, res, next) => {
 init_database();
 var app = (0, import_express12.default)();
 var isDbConnecting = false;
-app.use(async (req, res, next) => {
-  if (!isDbConnecting) {
+var triggerDbConnect = () => {
+  if (!isDbConnecting && !isDbConnected()) {
     isDbConnecting = true;
-    try {
-      await connectDatabase();
-    } catch (err) {
-      console.warn("[Serverless DB Middleware]", err?.message || err);
-    }
+    connectDatabase().catch((err) => console.warn("[Background DB Connect Notice]", err?.message || err)).finally(() => {
+      isDbConnecting = false;
+    });
   }
+};
+triggerDbConnect();
+app.use((req, res, next) => {
+  triggerDbConnect();
   next();
 });
 app.use(

@@ -8,21 +8,27 @@ import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
 import { sendSuccess, sendError } from './utils/response';
 
-import { connectDatabase } from './config/database';
+import { connectDatabase, isDbConnected } from './config/database';
 
 const app: Application = express();
 
-// Auto-connect database once on startup/first request
+// Non-blocking database connection initiation
 let isDbConnecting = false;
-app.use(async (req: Request, res: Response, next: any) => {
-  if (!isDbConnecting) {
+const triggerDbConnect = () => {
+  if (!isDbConnecting && !isDbConnected()) {
     isDbConnecting = true;
-    try {
-      await connectDatabase();
-    } catch (err: any) {
-      console.warn('[Serverless DB Middleware]', err?.message || err);
-    }
+    connectDatabase()
+      .catch((err) => console.warn('[Background DB Connect Notice]', err?.message || err))
+      .finally(() => { isDbConnecting = false; });
   }
+};
+
+// Trigger initial connection in background
+triggerDbConnect();
+
+// Non-blocking middleware: kicks off background connect if needed without stalling requests
+app.use((req: Request, res: Response, next: any) => {
+  triggerDbConnect();
   next();
 });
 
